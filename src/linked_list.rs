@@ -1,34 +1,48 @@
-struct Linked_List<T> {
+pub struct Linked_List<T> {
     length: usize,
-    head: Option<Node<T>>
+    head: Option<Box<Node<T>>>
 }
 
 impl<T> Linked_List<T> {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Linked_List{
             length: 0,
             head: None,
         }
     }
 
-    fn len(self) -> usize {
+    pub fn len(self) -> usize {
         self.length
     }
 
-    fn add(&mut self, value: T) {
+    pub fn add(&mut self, value: T) {
         match &mut self.head {
             None => { 
                 self.head = Some(
-                    Node{value, next: None}) },
+                    Box::new(Node{value, next: None})) },
             Some(x) => {
                 let mut current = x;
                 while current.next.is_some() {
-                   current = &mut *current.next.expect("Should never happen"); 
+                   current = current.next.as_mut().expect("");
                 }
                 current.next = Some(
                     Box::new(Node{value, next: None}))}
         }
         self.length += 1;
+    }
+
+    pub fn get_last_value(&mut self)
+
+    fn get_last(&mut self) -> Option<&mut Box<Node<T>>> {
+        match &mut self.head {
+            None => { None }
+            Some(x) => {
+                let mut current = x;
+                while current.next.is_some() {
+                   current = current.next.as_mut().expect("");
+                }
+                Some(current)}
+        }
     }
 }
 
@@ -51,6 +65,6 @@ mod tests {
     fn test_add_single_element() {
         let mut list = Linked_List::new();
         list.add(1);
-        assert_eq!(list.len(), 0);
+        assert_eq!(list.len(), 1);
     }
 }
