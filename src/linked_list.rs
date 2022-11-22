@@ -1,54 +1,58 @@
-pub struct Linked_List<T> {
-    length: usize,
-    head: Option<Box<Node<T>>>
+enum Node<T> {
+    None,
+    Tail { value: T },
+    Link { value: T, next: Box<Self> }, 
 }
 
-impl<T> Linked_List<T> {
-    pub fn new() -> Self {
-        Linked_List{
-            length: 0,
-            head: None,
+impl<T> Node<T> where T: Copy {
+    pub fn push(&mut self, value: T) {
+        match self {
+            Self::None => { self.to_tail(value) },
+            Self::Tail { value:_ } => { self.to_link(value) },
+            Self::Link { value:_, next } => { next.push(value) },
         }
     }
 
-    pub fn len(self) -> usize {
-        self.length
-    }
-
-    pub fn add(&mut self, value: T) {
-        match &mut self.head {
-            None => { 
-                self.head = Some(
-                    Box::new(Node{value, next: None})) },
-            Some(x) => {
-                let mut current = x;
-                while current.next.is_some() {
-                   current = current.next.as_mut().expect("");
-                }
-                current.next = Some(
-                    Box::new(Node{value, next: None}))}
-        }
-        self.length += 1;
-    }
-
-    pub fn get_last_value(&mut self)
-
-    fn get_last(&mut self) -> Option<&mut Box<Node<T>>> {
-        match &mut self.head {
-            None => { None }
-            Some(x) => {
-                let mut current = x;
-                while current.next.is_some() {
-                   current = current.next.as_mut().expect("");
-                }
-                Some(current)}
+    pub fn pop(&mut self) -> Option<T> {
+        match self {
+            Self::None => None,
+            Self::Tail { value } => {
+                let value = *value;
+                self.to_none();
+                Some(value)
+            },
+            Self::Link { value, next } => {
+                let mut n = Box::new(Node::None);
+                let item = *value;
+                std::mem::swap(next, &mut n);
+                self.to_next(*n);
+                Some(item)
+            },
         }
     }
-}
 
-struct Node<T> {
-    value: T,
-    next: Option<Box<Node<T>>>,
+    fn to_none(&mut self) {
+        *self = Self::None
+    }
+
+    fn to_tail(&mut self, value: T) {
+        *self = match self {
+            Self::None => Self::Tail { value },
+            Self::Link {value:_, next:_} => Self::Tail { value },
+            _ => panic!("Cannot convert tail to tail"),
+        }
+    }
+
+    fn to_link(&mut self, new_value: T) {
+        *self = match self {
+            Self::Tail { value } => Self::Link { value: *value, next: Box::new(Self::Tail { value: new_value } ) },
+            _ => panic!("Cannot convert tail to tail"),
+        }
+    }
+
+    fn to_next(&mut self, next: Node<T>) {
+        *self = next; 
+    }
 }
 
 #[cfg(test)]
@@ -57,14 +61,9 @@ mod tests {
 
     #[test]
     fn test_empty_list() {
-        let list: Linked_List<u32> = Linked_List::new();
-        assert_eq!(list.len(), 0);
     }
 
     #[test]
     fn test_add_single_element() {
-        let mut list = Linked_List::new();
-        list.add(1);
-        assert_eq!(list.len(), 1);
     }
 }
